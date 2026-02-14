@@ -2,15 +2,16 @@
 <html lang="en" id="htmlRoot">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Math Quest 🪙 (2 Players • Kids)</title>
 
-  <!-- PyScript (Python in the browser) -->
-  <link rel="stylesheet" href="https://pyscript.net/releases/2025.11.2/core.css">
+  <!-- Fonts (Cairo + Tajawal) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
+  <!-- PyScript -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2025.11.2/core.css">
   <script type="module" src="https://pyscript.net/releases/2025.11.2/core.js"></script>
 
   <style>
@@ -32,10 +33,10 @@
       --overlay:#0b1220cc;
     }
     *{ box-sizing:border-box; }
+    html, body { height: 100%; }
     body{
       margin:0;
       font-family: "Cairo","Tajawal",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-
       color:var(--ink);
       min-height:100vh;
       background:
@@ -44,12 +45,11 @@
         radial-gradient(circle at 40% 80%, #ffffff55 0 14px, transparent 15px),
         linear-gradient(135deg, var(--bg1), var(--bg2));
       overflow-x:hidden;
-    }
-	h1 { font-weight: 900; }
-.subtitle { font-weight: 700; }
-.question { font-weight: 900; }
-button { font-weight: 900; }
 
+      /* يقلل اهتزاز السكرول في iOS */
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: none;
+    }
 
     .wrap{ max-width: 1040px; margin: 18px auto; padding: 14px; }
     .topbar{
@@ -71,8 +71,8 @@ button { font-weight: 900; }
       0%,100%{ transform: rotate(-6deg) translateY(0); }
       50%{ transform: rotate(6deg) translateY(-2px); }
     }
-    h1{ margin:0; font-size: 26px; letter-spacing:.3px; }
-    .subtitle{ margin:2px 0 0; font-size: 13px; opacity:.85; }
+    h1{ margin:0; font-size: 26px; letter-spacing:.3px; font-weight: 900; }
+    .subtitle{ margin:2px 0 0; font-size: 13px; opacity:.88; font-weight: 700; }
 
     .globalCard{
       background: var(--card);
@@ -87,6 +87,7 @@ button { font-weight: 900; }
       flex-wrap:wrap;
       margin-bottom: 12px;
     }
+
     .pill{
       background:#fff;
       border:2px solid var(--line);
@@ -97,6 +98,7 @@ button { font-weight: 900; }
       box-shadow: 0 10px 25px rgba(16,42,67,.08);
       user-select:none;
       flex-wrap:wrap;
+      font-weight: 800;
     }
 
     .langWrap{
@@ -116,6 +118,7 @@ button { font-weight: 900; }
       background:#fff;
       cursor:pointer;
       outline:none;
+      font-family: inherit;
     }
 
     .actions{ display:flex; gap:10px; flex-wrap:wrap; }
@@ -132,6 +135,7 @@ button { font-weight: 900; }
       transition: .12s ease;
       user-select:none;
       white-space: nowrap;
+      font-family: inherit;
     }
     button:active{ transform: translateY(2px) scale(.99); }
     .btnReset{ background: linear-gradient(135deg, var(--btnReset), #93c5fd); }
@@ -191,16 +195,19 @@ button { font-weight: 900; }
       display:flex; gap:10px; align-items:center; flex-wrap:wrap;
     }
     .nameRow label{ font-weight: 900; font-size: 13px; }
+
+    /* مهم للآيباد: حجم الخط 16+ يمنع Safari Zoom ويقلل نزول الصفحة */
     input[type="text"], input[type="number"]{
       padding: 12px 12px;
       border-radius: 16px;
       border: 3px solid #cfe0ff;
       background:#ffffff;
-      font-size: 16px;
+      font-size: 16px;   /* لا تقل عن 16 */
       outline:none;
       transition: .15s ease;
       width: 220px;
       max-width: 100%;
+      font-family: inherit;
     }
     input[type="number"]{ width: 100%; }
     input:focus{
@@ -208,7 +215,62 @@ button { font-weight: 900; }
       box-shadow: 0 0 0 6px rgba(124,58,237,.15);
     }
 
-    .statsRow{ display:flex; flex-wrap:wrap; gap:10px; margin: 8px 0 12px; }
+    .statsRow{ display:flex; flex-wrap:wrap; gap:10px; margin: 8px 0 10px; }
+
+    /* Progress / Car track */
+    .progressWrap{
+      background: #ffffff;
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      padding: 10px 12px;
+      box-shadow: 0 10px 25px rgba(16,42,67,.08);
+      margin-bottom: 10px;
+    }
+    .progressTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-weight: 900;
+      font-size: 13px;
+      user-select:none;
+    }
+    .track{
+      position: relative;
+      margin-top: 10px;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #eaf2ff, #ffffff);
+      border: 2px dashed #bcd4ff;
+      overflow: hidden;
+    }
+    .fill{
+      position:absolute;
+      inset:0;
+      width: calc(var(--pos, 0) * 100%);
+      background: linear-gradient(90deg, #22c55e55, #a3e63555);
+    }
+    .car{
+      position:absolute;
+      top: 50%;
+      left: calc(var(--pos, 0) * 100%);
+      transform: translate(-50%, -55%);
+      font-size: 20px;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
+      transition: left .35s ease;
+      user-select:none;
+      white-space: nowrap;
+    }
+    .trackMarks{
+      display:flex;
+      justify-content:space-between;
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 900;
+      opacity: .75;
+      user-select:none;
+    }
+
     .questionBox{
       background: var(--soft);
       border: 3px dashed #bcd4ff;
@@ -258,6 +320,7 @@ button { font-weight: 900; }
       text-align:center;
       max-width: min(92vw, 760px);
       line-height: 1.2;
+      font-family: inherit;
     }
     .popGood{ background: linear-gradient(135deg, #22c55e, #a3e635); }
     .popBad{ background: linear-gradient(135deg, #fb7185, #ffb4c0); }
@@ -287,9 +350,10 @@ button { font-weight: 900; }
       box-shadow: 0 20px 80px rgba(0,0,0,.35);
       padding: 16px;
       text-align:center;
+      font-family: inherit;
     }
-    .modal h2{ margin: 6px 0 6px; }
-    .modal p{ margin: 6px 0; font-size: 14px; opacity:.9; }
+    .modal h2{ margin: 6px 0 6px; font-weight: 900; }
+    .modal p{ margin: 6px 0; font-size: 14px; opacity:.9; font-weight: 800; }
     .modal .big{ font-size: 34px; font-weight: 1000; margin: 6px 0; }
     .modal .btnRow2{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 12px; }
     .btnNext{ background: linear-gradient(135deg, #22c55e, #a3e635); }
@@ -302,15 +366,18 @@ button { font-weight: 900; }
       user-select:none;
       color:#ffffffdd;
       text-shadow: 0 2px 10px rgba(0,0,0,.25);
+      font-weight: 800;
     }
 
-    /* RTL tweaks for Arabic */
+    /* RTL tweaks */
     [dir="rtl"] .title { flex-direction: row-reverse; }
     [dir="rtl"] .topbar { direction: rtl; }
     [dir="rtl"] .globalCard { direction: rtl; }
     [dir="rtl"] .playerHeader { direction: rtl; }
     [dir="rtl"] .statsRow { direction: rtl; }
     [dir="rtl"] .questionBox { direction: rtl; }
+    [dir="rtl"] .progressTop { direction: rtl; }
+    [dir="rtl"] .trackMarks { direction: rtl; }
   </style>
 </head>
 
@@ -331,7 +398,6 @@ button { font-weight: 900; }
           <option value="en">English</option>
           <option value="ar">العربية</option>
           <option value="es">Español</option>
-          <!-- Add more languages easily in Python dictionary -->
         </select>
       </div>
     </div>
@@ -354,6 +420,21 @@ button { font-weight: 900; }
           <div class="nameRow">
             <label id="ui_nameLabel1" for="name1">Name:</label>
             <input id="name1" type="text" placeholder="e.g., Fahad" maxlength="14" />
+          </div>
+        </div>
+
+        <!-- Progress Car -->
+        <div class="progressWrap">
+          <div class="progressTop">
+            <div id="ui_progress1">🚗 Progress</div>
+            <div><span id="ui_step1">Step</span> <b id="stepNow1">1</b>/<b id="stepMax1">6</b></div>
+          </div>
+          <div class="track" id="track1" style="--pos:0;">
+            <div class="fill" id="fill1" style="--pos:0;"></div>
+            <div class="car" id="car1">🚗</div>
+          </div>
+          <div class="trackMarks">
+            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
           </div>
         </div>
 
@@ -391,6 +472,21 @@ button { font-weight: 900; }
           </div>
         </div>
 
+        <!-- Progress Car -->
+        <div class="progressWrap">
+          <div class="progressTop">
+            <div id="ui_progress2">🚙 Progress</div>
+            <div><span id="ui_step2">Step</span> <b id="stepNow2">1</b>/<b id="stepMax2">6</b></div>
+          </div>
+          <div class="track" id="track2" style="--pos:0;">
+            <div class="fill" id="fill2" style="--pos:0;"></div>
+            <div class="car" id="car2">🚙</div>
+          </div>
+          <div class="trackMarks">
+            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+          </div>
+        </div>
+
         <div class="statsRow">
           <div class="pill"><span id="ui_level2">🌟 Level:</span> <b id="level2">1</b></div>
           <div class="pill"><span id="ui_coins2">🪙 Coins:</span> <b id="coins2">0</b></div>
@@ -414,11 +510,10 @@ button { font-weight: 900; }
     </div>
 
     <div class="tiny">
-      Run using a local server: <b>python -m http.server 8000</b> then open <b>http://localhost:8000/yourfile.html</b>
-    </div>
+لعبة فهد بن ثامر الحربي     </div>
   </div>
 
-  <!-- Top Pop Badge -->
+  <!-- Pop Badge -->
   <div class="popBadge" id="popBadge">✅ Right!</div>
 
   <!-- Level Result Overlay -->
@@ -435,10 +530,10 @@ button { font-weight: 900; }
     </div>
   </div>
 
-  <script type="mpy">
+  <script type="py">
 import random
 from pyscript import document
-from pyscript.ffi import create_proxy
+from pyodide.ffi import create_proxy
 
 # ---------- i18n ----------
 I18N = {
@@ -473,6 +568,8 @@ I18N = {
     "modal_total":"Total: {coins} coins 🪙",
     "modal_next_text":"Press Next Level to continue!",
     "next":"➡️ Next Level",
+    "progress":"🚗 Progress",
+    "step":"Step",
   },
   "ar": {
     "dir":"rtl",
@@ -505,6 +602,8 @@ I18N = {
     "modal_total":"المجموع: {coins} عملة 🪙",
     "modal_next_text":"اضغط المستوى التالي للمتابعة!",
     "next":"➡️ المستوى التالي",
+    "progress":"🚗 التقدم",
+    "step":"الخطوة",
   },
   "es": {
     "dir":"ltr",
@@ -537,12 +636,13 @@ I18N = {
     "modal_total":"Total: {coins} monedas 🪙",
     "modal_next_text":"Pulsa Siguiente Nivel para continuar!",
     "next":"➡️ Siguiente Nivel",
+    "progress":"🚗 Progreso",
+    "step":"Paso",
   }
 }
 
 lang = "en"
 
-# ---------- helpers ----------
 def el(id_): return document.getElementById(id_)
 def t(key): return I18N[lang][key]
 
@@ -596,7 +696,44 @@ def set_ui_strings():
     el("modalNext").textContent = t("next")
     el("modalReset").textContent = t("reset")
 
-# Pop badge (Right/Wrong) - stays 4 seconds
+    # progress labels
+    set_text("ui_progress1", t("progress"))
+    set_text("ui_progress2", t("progress"))
+    set_text("ui_step1", t("step"))
+    set_text("ui_step2", t("step"))
+
+# ---------- iPad scroll lock while typing ----------
+_saved_scroll_y = 0
+
+def lock_scroll(*_):
+    # prevents page jumping when iOS keyboard opens
+    global _saved_scroll_y
+    _saved_scroll_y = int(document.defaultView.scrollY)
+    body = document.body
+    body.style.position = "fixed"
+    body.style.top = f"-{_saved_scroll_y}px"
+    body.style.left = "0"
+    body.style.right = "0"
+    body.style.width = "100%"
+
+def unlock_scroll(*_):
+    body = document.body
+    top = body.style.top
+    body.style.position = ""
+    body.style.top = ""
+    body.style.left = ""
+    body.style.right = ""
+    body.style.width = ""
+    try:
+        y = int(top.replace("px","").replace("-","")) if top else 0
+    except:
+        y = 0
+    document.defaultView.scrollTo(0, y)
+
+# ---------- UI helpers ----------
+def coins_pop(pid: int, value: int):
+    el(f"coins{pid}").innerHTML = f'<span class="coinsPop">{value}</span>'
+
 def show_pop(text: str, kind: str):
     badge = el("popBadge")
     badge.textContent = text
@@ -614,7 +751,6 @@ def show_pop(text: str, kind: str):
 
     document.defaultView.setTimeout(create_proxy(hide_later), 4000)
 
-# Modal overlay
 def open_modal(pid: int, title: str, big: str, small: str, emoji="🎉"):
     overlay = el("overlay")
     overlay.dataset.pid = str(pid)
@@ -635,30 +771,32 @@ def hint_cost(lv: int) -> int:
     return 3 + (lv - 1) * 1
 
 def make_question(lv: int):
-    # Only + and -, no negative result for subtraction
+    # Only + and -, no negative result
     max_n = 20 + (lv - 1) * 10
     op = random.choice(["+","-"])
     a = random.randint(1, max_n)
     b = random.randint(1, max_n)
+
     if op == "-":
         if b > a:
             a, b = b, a
         ans = a - b
-        hint_txt = f"{a} − {b}  →  {a} - {b}"
+        hint_txt = f"{a} − {b}"
     else:
         ans = a + b
-        hint_txt = f"{a} + {b}  →  {a} + {b}"
+        hint_txt = f"{a} + {b}"
+
     return {"text": f"{a} {op} {b} = ?", "answer": ans, "hint": hint_txt}
 
 def read_int(value):
-    try:
-        return int(value)
-    except:
-        return None
+    try: return int(value)
+    except: return None
 
 def safe_name(pid: int) -> str:
     name = el(f"name{pid}").value.strip()
-    return name if name else (t("p1") if pid == 1 else t("p2"))
+    if name:
+        return name
+    return t("p1") if pid == 1 else t("p2")
 
 # ---------- per-player state ----------
 players = {
@@ -666,8 +804,21 @@ players = {
     2: {"level": 1, "coins": 0, "q_index": 1, "current": None, "hint_used": False},
 }
 
-def coins_pop(pid: int, value: int):
-    el(f"coins{pid}").innerHTML = f'<span class="coinsPop">{value}</span>'
+def set_progress(pid: int):
+    st = players[pid]
+    # progress position (0.0 .. 1.0)
+    # q_index = 1 means start (0 progress)
+    pos = (st["q_index"] - 1) / QUESTIONS_PER_LEVEL
+    if pos < 0: pos = 0
+    if pos > 1: pos = 1
+
+    track = el(f"track{pid}")
+    fill = el(f"fill{pid}")
+    track.style.setProperty("--pos", str(pos))
+    fill.style.setProperty("--pos", str(pos))
+
+    set_text(f"stepNow{pid}", st["q_index"])
+    set_text(f"stepMax{pid}", QUESTIONS_PER_LEVEL)
 
 def render(pid: int):
     st = players[pid]
@@ -678,6 +829,7 @@ def render(pid: int):
     set_text(f"question{pid}", st["current"]["text"])
     set_text(f"mascot{pid}", random.choice(MASCOTS))
     set_text(f"hintcost{pid}", hint_cost(st["level"]))
+    set_progress(pid)
 
 def new_round(pid: int):
     st = players[pid]
@@ -700,7 +852,6 @@ def go_next_level(pid: int):
     st["q_index"] = 1
     new_round(pid)
 
-# ---------- actions ----------
 def submit_for(pid: int, evt=None):
     st = players[pid]
     nm = safe_name(pid)
@@ -740,7 +891,7 @@ def hint_for(pid: int, evt=None):
     st["coins"] -= cost
     st["hint_used"] = True
 
-    # show hint in the pop (no history)
+    # Hint shown in pop only (no history)
     show_pop(f"{t('hint_used_pop')} (-{cost}) • {st['current']['hint']} ({nm})", "info")
     render(pid)
 
@@ -753,16 +904,13 @@ def reset_all(evt=None):
         players[pid]["hint_used"] = False
         new_round(pid)
 
-# ---------- language change ----------
 def on_lang_change(evt=None):
     global lang
     lang = el("lang").value
     set_ui_strings()
-    # keep the game running; just re-render to update hint-cost label/coin word etc.
     render(1)
     render(2)
 
-# ---------- modal buttons ----------
 def modal_next(evt=None):
     overlay = el("overlay")
     pid = int(overlay.dataset.pid or "1")
@@ -772,7 +920,7 @@ def modal_next(evt=None):
 def modal_reset(evt=None):
     reset_all()
 
-# ---------- wire events (IMPORTANT: create_proxy) ----------
+# ---------- wire events (create_proxy) ----------
 submit1_proxy = create_proxy(lambda e: submit_for(1, e))
 hint1_proxy   = create_proxy(lambda e: hint_for(1, e))
 submit2_proxy = create_proxy(lambda e: submit_for(2, e))
@@ -783,6 +931,10 @@ next_proxy    = create_proxy(modal_next)
 mreset_proxy  = create_proxy(modal_reset)
 lang_proxy    = create_proxy(on_lang_change)
 
+# iPad scroll lock for answer inputs
+lock_proxy = create_proxy(lock_scroll)
+unlock_proxy = create_proxy(unlock_scroll)
+
 el("submit1").addEventListener("click", submit1_proxy)
 el("hint1").addEventListener("click", hint1_proxy)
 el("submit2").addEventListener("click", submit2_proxy)
@@ -791,8 +943,13 @@ el("hint2").addEventListener("click", hint2_proxy)
 el("resetAll").addEventListener("click", reset_proxy)
 el("modalNext").addEventListener("click", next_proxy)
 el("modalReset").addEventListener("click", mreset_proxy)
-
 el("lang").addEventListener("change", lang_proxy)
+
+# lock/unlock scroll on focus/blur (prevents page dropping on iPad)
+el("ans1").addEventListener("focus", lock_proxy)
+el("ans1").addEventListener("blur", unlock_proxy)
+el("ans2").addEventListener("focus", lock_proxy)
+el("ans2").addEventListener("blur", unlock_proxy)
 
 # init
 set_ui_strings()
