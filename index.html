@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en" id="htmlRoot">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Math Quest 🪙 (2 Players • Kids)</title>
+
+  <!-- PyScript (Python in the browser) -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2025.11.2/core.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <script type="module" src="https://pyscript.net/releases/2025.11.2/core.js"></script>
+
+  <style>
+    :root{
+      --bg1:#7c3aed;
+      --bg2:#06b6d4;
+      --card:#ffffffee;
+      --ink:#102a43;
+      --soft:#f2f7ff;
+      --line:#d7e3ff;
+
+      --p1:#ff4d6d;
+      --p2:#3b82f6;
+
+      --btnGood:#22c55e;
+      --btnHint:#f59e0b;
+      --btnReset:#8b5cf6;
+
+      --overlay:#0b1220cc;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: "Cairo","Tajawal",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+
+      color:var(--ink);
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 15% 20%, #ffffff55 0 12px, transparent 13px),
+        radial-gradient(circle at 80% 30%, #ffffff55 0 10px, transparent 11px),
+        radial-gradient(circle at 40% 80%, #ffffff55 0 14px, transparent 15px),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+	h1 { font-weight: 900; }
+.subtitle { font-weight: 700; }
+.question { font-weight: 900; }
+button { font-weight: 900; }
+
+
+    .wrap{ max-width: 1040px; margin: 18px auto; padding: 14px; }
+    .topbar{
+      display:flex; gap:14px; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; margin-bottom: 12px;
+    }
+    .title{ display:flex; gap:12px; align-items:center; }
+    .logo{
+      width:58px; height:58px; border-radius:18px;
+      background: linear-gradient(135deg, #ffe066, #ff4d6d);
+      display:grid; place-items:center;
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      transform: rotate(-6deg);
+      animation: wiggle 2.8s ease-in-out infinite;
+      user-select:none;
+      font-size: 30px;
+    }
+    @keyframes wiggle{
+      0%,100%{ transform: rotate(-6deg) translateY(0); }
+      50%{ transform: rotate(6deg) translateY(-2px); }
+    }
+    h1{ margin:0; font-size: 26px; letter-spacing:.3px; }
+    .subtitle{ margin:2px 0 0; font-size: 13px; opacity:.85; }
+
+    .globalCard{
+      background: var(--card);
+      border: 3px solid #ffffff88;
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.22);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 12px;
+    }
+    .pill{
+      background:#fff;
+      border:2px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-size: 13px;
+      display:flex; gap:8px; align-items:center;
+      box-shadow: 0 10px 25px rgba(16,42,67,.08);
+      user-select:none;
+      flex-wrap:wrap;
+    }
+
+    .langWrap{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+      background:#fff;
+      border:2px solid var(--line);
+      border-radius:999px;
+      padding: 8px 10px;
+      box-shadow: 0 10px 25px rgba(16,42,67,.08);
+    }
+    .langWrap label{ font-weight:900; font-size: 13px; }
+    select{
+      border:2px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 900;
+      background:#fff;
+      cursor:pointer;
+      outline:none;
+    }
+
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+    button{
+      border:none;
+      padding: 12px 14px;
+      border-radius: 18px;
+      font-size: 15px;
+      font-weight: 900;
+      cursor:pointer;
+      color:#0b1220;
+      box-shadow: 0 14px 30px rgba(0,0,0,.16);
+      transform: translateY(0);
+      transition: .12s ease;
+      user-select:none;
+      white-space: nowrap;
+    }
+    button:active{ transform: translateY(2px) scale(.99); }
+    .btnReset{ background: linear-gradient(135deg, var(--btnReset), #93c5fd); }
+    .btnSubmit{ background: linear-gradient(135deg, var(--btnGood), #a3e635); }
+    .btnHint{ background: linear-gradient(135deg, var(--btnHint), #fde047); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .playerCard{
+      background: var(--card);
+      border: 3px solid #ffffff88;
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.22);
+      position: relative;
+      overflow:hidden;
+    }
+    .playerCard::before{
+      content:"";
+      position:absolute; inset:-50px;
+      background:
+        radial-gradient(circle at 12% 18%, #ffe06655 0 26px, transparent 27px),
+        radial-gradient(circle at 78% 22%, #ffffff55 0 22px, transparent 23px),
+        radial-gradient(circle at 20% 84%, #22c55e33 0 26px, transparent 27px),
+        radial-gradient(circle at 86% 78%, #3b82f633 0 24px, transparent 25px);
+      z-index:0;
+      pointer-events:none;
+    }
+    .playerCard > *{ position:relative; z-index:1; }
+
+    .playerHeader{
+      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .tag{
+      display:flex; align-items:center; gap:10px;
+      user-select:none;
+      font-weight: 900;
+    }
+    .badge{
+      width:30px; height:30px; border-radius:12px;
+      display:grid; place-items:center; color:white;
+      font-size: 16px; font-weight:900;
+      box-shadow: 0 10px 20px rgba(0,0,0,.14);
+    }
+    .b1{ background: linear-gradient(135deg, var(--p1), #f43f5e); }
+    .b2{ background: linear-gradient(135deg, var(--p2), #06b6d4); }
+
+    .nameRow{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .nameRow label{ font-weight: 900; font-size: 13px; }
+    input[type="text"], input[type="number"]{
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 3px solid #cfe0ff;
+      background:#ffffff;
+      font-size: 16px;
+      outline:none;
+      transition: .15s ease;
+      width: 220px;
+      max-width: 100%;
+    }
+    input[type="number"]{ width: 100%; }
+    input:focus{
+      border-color:#7c3aed;
+      box-shadow: 0 0 0 6px rgba(124,58,237,.15);
+    }
+
+    .statsRow{ display:flex; flex-wrap:wrap; gap:10px; margin: 8px 0 12px; }
+    .questionBox{
+      background: var(--soft);
+      border: 3px dashed #bcd4ff;
+      border-radius: 18px;
+      padding: 14px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; flex-wrap:wrap;
+    }
+    .question{
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing:.5px;
+    }
+    .mascot{
+      font-size: 34px;
+      animation: bounce 1.6s ease-in-out infinite;
+      user-select:none;
+    }
+    @keyframes bounce{
+      0%,100%{ transform: translateY(0); }
+      50%{ transform: translateY(-6px); }
+    }
+
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+
+    .coinsPop{ display:inline-block; animation: pop .35s ease; }
+    @keyframes pop{
+      0%{ transform: scale(.8); opacity:.2; }
+      100%{ transform: scale(1); opacity:1; }
+    }
+
+    /* Pop feedback badge (4 seconds) */
+    .popBadge{
+      position: fixed;
+      left: 50%;
+      top: 16px;
+      transform: translateX(-50%);
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-weight: 1000;
+      font-size: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      z-index: 9999;
+      display:none;
+      user-select:none;
+      border: 2px solid #ffffffaa;
+      text-align:center;
+      max-width: min(92vw, 760px);
+      line-height: 1.2;
+    }
+    .popGood{ background: linear-gradient(135deg, #22c55e, #a3e635); }
+    .popBad{ background: linear-gradient(135deg, #fb7185, #ffb4c0); }
+    .popInfo{ background: linear-gradient(135deg, #60a5fa, #93c5fd); }
+    .popShow{ display:block; animation: popDrop .55s ease; }
+    @keyframes popDrop{
+      0%{ transform: translateX(-50%) translateY(-18px) scale(.92); opacity:.25; }
+      100%{ transform: translateX(-50%) translateY(0) scale(1); opacity:1; }
+    }
+
+    /* Level result overlay */
+    .overlay{
+      position: fixed; inset:0;
+      background: var(--overlay);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 9998;
+    }
+    .overlay.show{ display:flex; }
+    .modal{
+      width: min(560px, 96vw);
+      background: #ffffff;
+      border-radius: 22px;
+      border: 3px solid #ffffffaa;
+      box-shadow: 0 20px 80px rgba(0,0,0,.35);
+      padding: 16px;
+      text-align:center;
+    }
+    .modal h2{ margin: 6px 0 6px; }
+    .modal p{ margin: 6px 0; font-size: 14px; opacity:.9; }
+    .modal .big{ font-size: 34px; font-weight: 1000; margin: 6px 0; }
+    .modal .btnRow2{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 12px; }
+    .btnNext{ background: linear-gradient(135deg, #22c55e, #a3e635); }
+
+    .tiny{
+      font-size: 12px;
+      opacity:.9;
+      margin-top: 10px;
+      text-align:center;
+      user-select:none;
+      color:#ffffffdd;
+      text-shadow: 0 2px 10px rgba(0,0,0,.25);
+    }
+
+    /* RTL tweaks for Arabic */
+    [dir="rtl"] .title { flex-direction: row-reverse; }
+    [dir="rtl"] .topbar { direction: rtl; }
+    [dir="rtl"] .globalCard { direction: rtl; }
+    [dir="rtl"] .playerHeader { direction: rtl; }
+    [dir="rtl"] .statsRow { direction: rtl; }
+    [dir="rtl"] .questionBox { direction: rtl; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <div class="logo">🧠</div>
+        <div>
+          <h1 id="ui_title">Math Quest 🪙</h1>
+          <div class="subtitle" id="ui_subtitle">Only + and − • no negative answers • Hint • Pop stays 4 seconds</div>
+        </div>
+      </div>
+
+      <div class="langWrap">
+        <label id="ui_langLabel" for="lang">Language:</label>
+        <select id="lang">
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+          <option value="es">Español</option>
+          <!-- Add more languages easily in Python dictionary -->
+        </select>
+      </div>
+    </div>
+
+    <div class="globalCard">
+      <div class="pill" id="ui_tip">✨ Each player plays independently. Right ✅ / Wrong ❌</div>
+      <div class="actions">
+        <button class="btnReset" id="resetAll">🔄 Reset Game</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Player 1 -->
+      <div class="playerCard">
+        <div class="playerHeader">
+          <div class="tag">
+            <div class="badge b1">1</div>
+            <div id="ui_p1">Player 1</div>
+          </div>
+          <div class="nameRow">
+            <label id="ui_nameLabel1" for="name1">Name:</label>
+            <input id="name1" type="text" placeholder="e.g., Fahad" maxlength="14" />
+          </div>
+        </div>
+
+        <div class="statsRow">
+          <div class="pill"><span id="ui_level">🌟 Level:</span> <b id="level1">1</b></div>
+          <div class="pill"><span id="ui_coins">🪙 Coins:</span> <b id="coins1">0</b></div>
+          <div class="pill"><span id="ui_q">📌 Q:</span> <b id="qnum1">1</b>/<span id="qmax1">6</span></div>
+          <div class="pill"><span id="ui_hint">💡 Hint:</span> <b id="hintcost1">3</b> <span id="ui_coinWord">coins</span></div>
+        </div>
+
+        <div class="questionBox">
+          <div class="question" id="question1">Starting…</div>
+          <div class="mascot" id="mascot1">🐵</div>
+        </div>
+
+        <div style="margin-top:10px; font-weight: 900; font-size: 13px;" id="ui_answer">Your Answer</div>
+        <input id="ans1" type="number" inputmode="numeric" placeholder="Type your answer…" />
+
+        <div class="btnRow">
+          <button class="btnSubmit" id="submit1">✅ Submit</button>
+          <button class="btnHint" id="hint1">💡 Hint</button>
+        </div>
+      </div>
+
+      <!-- Player 2 -->
+      <div class="playerCard">
+        <div class="playerHeader">
+          <div class="tag">
+            <div class="badge b2">2</div>
+            <div id="ui_p2">Player 2</div>
+          </div>
+          <div class="nameRow">
+            <label id="ui_nameLabel2" for="name2">Name:</label>
+            <input id="name2" type="text" placeholder="e.g., Sara" maxlength="14" />
+          </div>
+        </div>
+
+        <div class="statsRow">
+          <div class="pill"><span id="ui_level2">🌟 Level:</span> <b id="level2">1</b></div>
+          <div class="pill"><span id="ui_coins2">🪙 Coins:</span> <b id="coins2">0</b></div>
+          <div class="pill"><span id="ui_q2">📌 Q:</span> <b id="qnum2">1</b>/<span id="qmax2">6</span></div>
+          <div class="pill"><span id="ui_hint2">💡 Hint:</span> <b id="hintcost2">3</b> <span id="ui_coinWord2">coins</span></div>
+        </div>
+
+        <div class="questionBox">
+          <div class="question" id="question2">Starting…</div>
+          <div class="mascot" id="mascot2">🦊</div>
+        </div>
+
+        <div style="margin-top:10px; font-weight: 900; font-size: 13px;" id="ui_answer2">Your Answer</div>
+        <input id="ans2" type="number" inputmode="numeric" placeholder="Type your answer…" />
+
+        <div class="btnRow">
+          <button class="btnSubmit" id="submit2">✅ Submit</button>
+          <button class="btnHint" id="hint2">💡 Hint</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tiny">
+      Run using a local server: <b>python -m http.server 8000</b> then open <b>http://localhost:8000/yourfile.html</b>
+    </div>
+  </div>
+
+  <!-- Top Pop Badge -->
+  <div class="popBadge" id="popBadge">✅ Right!</div>
+
+  <!-- Level Result Overlay -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div style="font-size:42px" id="modalEmoji">🎉</div>
+      <h2 id="modalTitle">Level Complete!</h2>
+      <div class="big" id="modalBig">Total: 0 coins</div>
+      <p id="modalSmall">Press Next Level to continue!</p>
+      <div class="btnRow2">
+        <button class="btnNext" id="modalNext">➡️ Next Level</button>
+        <button class="btnReset" id="modalReset">🔄 Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="py">
+import random
+from pyscript import document
+from pyodide.ffi import create_proxy
+
+# ---------- i18n ----------
+I18N = {
+  "en": {
+    "dir":"ltr",
+    "title":"Math Quest 🪙",
+    "subtitle":"Only + and − • no negative answers • Hint • Pop stays 4 seconds",
+    "langLabel":"Language:",
+    "tip":"✨ Each player plays independently. Right ✅ / Wrong ❌",
+    "reset":"🔄 Reset Game",
+    "p1":"Player 1",
+    "p2":"Player 2",
+    "name":"Name:",
+    "name_ph_1":"e.g., Fahad",
+    "name_ph_2":"e.g., Sara",
+    "level":"🌟 Level:",
+    "coins":"🪙 Coins:",
+    "q":"📌 Q:",
+    "hint":"💡 Hint:",
+    "coinWord":"coins",
+    "answer":"Your Answer",
+    "ans_ph":"Type your answer…",
+    "submit":"✅ Submit",
+    "hint_btn":"💡 Hint",
+    "type_num":"✍️ Type a number!",
+    "right":"✅ RIGHT! +10 🪙",
+    "wrong":"❌ WRONG!",
+    "not_enough":"🪙 Not enough coins for hint!",
+    "hint_used":"💡 Hint already used!",
+    "hint_used_pop":"💡 Hint used",
+    "modal_level_done":"🏁 {name} finished Level {level}!",
+    "modal_total":"Total: {coins} coins 🪙",
+    "modal_next_text":"Press Next Level to continue!",
+    "next":"➡️ Next Level",
+  },
+  "ar": {
+    "dir":"rtl",
+    "title":"مغامرة الرياضيات 🪙",
+    "subtitle":"فقط + و − • بدون نتائج سلبية • تلميح • التنبيه يظهر ٤ ثوانٍ",
+    "langLabel":"اللغة:",
+    "tip":"✨ كل لاعب يلعب لوحده. صحيح ✅ / خطأ ❌",
+    "reset":"🔄 إعادة اللعب",
+    "p1":"اللاعب 1",
+    "p2":"اللاعب 2",
+    "name":"الاسم:",
+    "name_ph_1":"مثال: فهد",
+    "name_ph_2":"مثال: سارة",
+    "level":"🌟 المستوى:",
+    "coins":"🪙 العملات:",
+    "q":"📌 السؤال:",
+    "hint":"💡 تلميح:",
+    "coinWord":"عملات",
+    "answer":"إجابتك",
+    "ans_ph":"اكتب الإجابة…",
+    "submit":"✅ إرسال",
+    "hint_btn":"💡 تلميح",
+    "type_num":"✍️ اكتب رقمًا!",
+    "right":"✅ صحيح! +10 🪙",
+    "wrong":"❌ خطأ!",
+    "not_enough":"🪙 لا توجد عملات كافية للتلميح!",
+    "hint_used":"💡 تم استخدام التلميح!",
+    "hint_used_pop":"💡 تم استخدام التلميح",
+    "modal_level_done":"🏁 {name} أنهى المستوى {level}!",
+    "modal_total":"المجموع: {coins} عملة 🪙",
+    "modal_next_text":"اضغط المستوى التالي للمتابعة!",
+    "next":"➡️ المستوى التالي",
+  },
+  "es": {
+    "dir":"ltr",
+    "title":"Aventura Matemática 🪙",
+    "subtitle":"Solo + y − • sin respuestas negativas • Pista • Aviso 4 segundos",
+    "langLabel":"Idioma:",
+    "tip":"✨ Cada jugador juega solo. Correcto ✅ / Incorrecto ❌",
+    "reset":"🔄 Reiniciar",
+    "p1":"Jugador 1",
+    "p2":"Jugador 2",
+    "name":"Nombre:",
+    "name_ph_1":"Ej.: Fahad",
+    "name_ph_2":"Ej.: Sara",
+    "level":"🌟 Nivel:",
+    "coins":"🪙 Monedas:",
+    "q":"📌 P:",
+    "hint":"💡 Pista:",
+    "coinWord":"monedas",
+    "answer":"Tu respuesta",
+    "ans_ph":"Escribe la respuesta…",
+    "submit":"✅ Enviar",
+    "hint_btn":"💡 Pista",
+    "type_num":"✍️ Escribe un número!",
+    "right":"✅ ¡CORRECTO! +10 🪙",
+    "wrong":"❌ ¡INCORRECTO!",
+    "not_enough":"🪙 No hay monedas para la pista!",
+    "hint_used":"💡 ¡Pista ya usada!",
+    "hint_used_pop":"💡 Pista usada",
+    "modal_level_done":"🏁 ¡{name} terminó el Nivel {level}!",
+    "modal_total":"Total: {coins} monedas 🪙",
+    "modal_next_text":"Pulsa Siguiente Nivel para continuar!",
+    "next":"➡️ Siguiente Nivel",
+  }
+}
+
+lang = "en"
+
+# ---------- helpers ----------
+def el(id_): return document.getElementById(id_)
+def t(key): return I18N[lang][key]
+
+def set_dir_and_lang():
+    root = document.getElementById("htmlRoot")
+    root.lang = lang
+    root.dir = I18N[lang]["dir"]
+
+def set_text(id_, txt):
+    el(id_).textContent = str(txt)
+
+def set_ui_strings():
+    set_dir_and_lang()
+
+    set_text("ui_title", t("title"))
+    set_text("ui_subtitle", t("subtitle"))
+    set_text("ui_langLabel", t("langLabel"))
+    set_text("ui_tip", t("tip"))
+    el("resetAll").textContent = t("reset")
+
+    set_text("ui_p1", t("p1"))
+    set_text("ui_p2", t("p2"))
+
+    set_text("ui_nameLabel1", t("name"))
+    set_text("ui_nameLabel2", t("name"))
+    el("name1").placeholder = t("name_ph_1")
+    el("name2").placeholder = t("name_ph_2")
+
+    set_text("ui_level", t("level"))
+    set_text("ui_level2", t("level"))
+    set_text("ui_coins", t("coins"))
+    set_text("ui_coins2", t("coins"))
+    set_text("ui_q", t("q"))
+    set_text("ui_q2", t("q"))
+    set_text("ui_hint", t("hint"))
+    set_text("ui_hint2", t("hint"))
+
+    set_text("ui_coinWord", t("coinWord"))
+    set_text("ui_coinWord2", t("coinWord"))
+
+    set_text("ui_answer", t("answer"))
+    set_text("ui_answer2", t("answer"))
+    el("ans1").placeholder = t("ans_ph")
+    el("ans2").placeholder = t("ans_ph")
+
+    el("submit1").textContent = t("submit")
+    el("submit2").textContent = t("submit")
+    el("hint1").textContent = t("hint_btn")
+    el("hint2").textContent = t("hint_btn")
+
+    el("modalNext").textContent = t("next")
+    el("modalReset").textContent = t("reset")
+
+# Pop badge (Right/Wrong) - stays 4 seconds
+def show_pop(text: str, kind: str):
+    badge = el("popBadge")
+    badge.textContent = text
+    badge.className = "popBadge"
+    if kind == "good":
+        badge.classList.add("popGood")
+    elif kind == "bad":
+        badge.classList.add("popBad")
+    else:
+        badge.classList.add("popInfo")
+    badge.classList.add("popShow")
+
+    def hide_later(*_):
+        badge.classList.remove("popShow")
+
+    document.defaultView.setTimeout(create_proxy(hide_later), 4000)
+
+# Modal overlay
+def open_modal(pid: int, title: str, big: str, small: str, emoji="🎉"):
+    overlay = el("overlay")
+    overlay.dataset.pid = str(pid)
+    el("modalEmoji").textContent = emoji
+    el("modalTitle").textContent = title
+    el("modalBig").textContent = big
+    el("modalSmall").textContent = small
+    overlay.classList.add("show")
+
+def close_modal():
+    el("overlay").classList.remove("show")
+
+# ---------- game settings ----------
+QUESTIONS_PER_LEVEL = 6
+MASCOTS = ["🐵","🦊","🐸","🐯","🐼","🦁","🐶","🐱","🦄","🐙","🐧","🐰","🐨","🦋","🐝"]
+
+def hint_cost(lv: int) -> int:
+    return 3 + (lv - 1) * 1
+
+def make_question(lv: int):
+    # Only + and -, no negative result for subtraction
+    max_n = 20 + (lv - 1) * 10
+    op = random.choice(["+","-"])
+    a = random.randint(1, max_n)
+    b = random.randint(1, max_n)
+    if op == "-":
+        if b > a:
+            a, b = b, a
+        ans = a - b
+        hint_txt = f"{a} − {b}  →  {a} - {b}"
+    else:
+        ans = a + b
+        hint_txt = f"{a} + {b}  →  {a} + {b}"
+    return {"text": f"{a} {op} {b} = ?", "answer": ans, "hint": hint_txt}
+
+def read_int(value):
+    try:
+        return int(value)
+    except:
+        return None
+
+def safe_name(pid: int) -> str:
+    name = el(f"name{pid}").value.strip()
+    return name if name else (t("p1") if pid == 1 else t("p2"))
+
+# ---------- per-player state ----------
+players = {
+    1: {"level": 1, "coins": 0, "q_index": 1, "current": None, "hint_used": False},
+    2: {"level": 1, "coins": 0, "q_index": 1, "current": None, "hint_used": False},
+}
+
+def coins_pop(pid: int, value: int):
+    el(f"coins{pid}").innerHTML = f'<span class="coinsPop">{value}</span>'
+
+def render(pid: int):
+    st = players[pid]
+    set_text(f"level{pid}", st["level"])
+    coins_pop(pid, st["coins"])
+    set_text(f"qnum{pid}", st["q_index"])
+    set_text(f"qmax{pid}", QUESTIONS_PER_LEVEL)
+    set_text(f"question{pid}", st["current"]["text"])
+    set_text(f"mascot{pid}", random.choice(MASCOTS))
+    set_text(f"hintcost{pid}", hint_cost(st["level"]))
+
+def new_round(pid: int):
+    st = players[pid]
+    st["hint_used"] = False
+    st["current"] = make_question(st["level"])
+    el(f"ans{pid}").value = ""
+    render(pid)
+
+def finish_level(pid: int):
+    st = players[pid]
+    nm = safe_name(pid)
+    title = t("modal_level_done").format(name=nm, level=st["level"])
+    big = t("modal_total").format(coins=st["coins"])
+    small = t("modal_next_text")
+    open_modal(pid, title, big, small, emoji="🏁")
+
+def go_next_level(pid: int):
+    st = players[pid]
+    st["level"] += 1
+    st["q_index"] = 1
+    new_round(pid)
+
+# ---------- actions ----------
+def submit_for(pid: int, evt=None):
+    st = players[pid]
+    nm = safe_name(pid)
+    user_ans = read_int(el(f"ans{pid}").value)
+    ans = st["current"]["answer"]
+
+    if user_ans is None:
+        show_pop(t("type_num"), "info")
+        return
+
+    if user_ans == ans:
+        st["coins"] += 10
+        show_pop(f"{t('right')} ({nm})", "good")
+    else:
+        show_pop(f"{t('wrong')} ({nm})", "bad")
+
+    st["q_index"] += 1
+    if st["q_index"] > QUESTIONS_PER_LEVEL:
+        render(pid)
+        finish_level(pid)
+    else:
+        new_round(pid)
+
+def hint_for(pid: int, evt=None):
+    st = players[pid]
+    nm = safe_name(pid)
+
+    if st["hint_used"]:
+        show_pop(t("hint_used"), "info")
+        return
+
+    cost = hint_cost(st["level"])
+    if st["coins"] < cost:
+        show_pop(t("not_enough"), "bad")
+        return
+
+    st["coins"] -= cost
+    st["hint_used"] = True
+
+    # show hint in the pop (no history)
+    show_pop(f"{t('hint_used_pop')} (-{cost}) • {st['current']['hint']} ({nm})", "info")
+    render(pid)
+
+def reset_all(evt=None):
+    close_modal()
+    for pid in (1, 2):
+        players[pid]["level"] = 1
+        players[pid]["coins"] = 0
+        players[pid]["q_index"] = 1
+        players[pid]["hint_used"] = False
+        new_round(pid)
+
+# ---------- language change ----------
+def on_lang_change(evt=None):
+    global lang
+    lang = el("lang").value
+    set_ui_strings()
+    # keep the game running; just re-render to update hint-cost label/coin word etc.
+    render(1)
+    render(2)
+
+# ---------- modal buttons ----------
+def modal_next(evt=None):
+    overlay = el("overlay")
+    pid = int(overlay.dataset.pid or "1")
+    close_modal()
+    go_next_level(pid)
+
+def modal_reset(evt=None):
+    reset_all()
+
+# ---------- wire events (IMPORTANT: create_proxy) ----------
+submit1_proxy = create_proxy(lambda e: submit_for(1, e))
+hint1_proxy   = create_proxy(lambda e: hint_for(1, e))
+submit2_proxy = create_proxy(lambda e: submit_for(2, e))
+hint2_proxy   = create_proxy(lambda e: hint_for(2, e))
+
+reset_proxy   = create_proxy(reset_all)
+next_proxy    = create_proxy(modal_next)
+mreset_proxy  = create_proxy(modal_reset)
+lang_proxy    = create_proxy(on_lang_change)
+
+el("submit1").addEventListener("click", submit1_proxy)
+el("hint1").addEventListener("click", hint1_proxy)
+el("submit2").addEventListener("click", submit2_proxy)
+el("hint2").addEventListener("click", hint2_proxy)
+
+el("resetAll").addEventListener("click", reset_proxy)
+el("modalNext").addEventListener("click", next_proxy)
+el("modalReset").addEventListener("click", mreset_proxy)
+
+el("lang").addEventListener("change", lang_proxy)
+
+# init
+set_ui_strings()
+reset_all()
+  </script>
+</body>
+</html>
